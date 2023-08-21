@@ -2,7 +2,7 @@
     <div class="container">
 
       <div class="table-responsive">
-        <DataTable id="table_example" :ajax="ajax" ref="table" :columns="columns" :options="options" class="display nowrap"></DataTable>
+        <DataTable id="table_component" :ajax="ajax" ref="table" :columns="columns" :options="options" class="display nowrap"></DataTable>
       </div>
 
     </div>
@@ -71,25 +71,7 @@
           // options : options,
         }
       }
-    };
-
-    $(document).ready(function(){
-      $("#table_example").append(
-        $('<tfoot/>').append( $("#table_example thead tr").clone() )
-      );
-      $('#table_example tfoot th').each(function () {
-        var title = $(this).text();
-        // console.log($(this)[0].className);
-
-        const className = $(this)[0].className;
-        const substring = "text_search";
-        if (className.includes(substring)) {
-          $(this).html('<input type="text" placeholder="Search ' + title + '" />');
-        }
-    });
-
-    });
-    
+    }
     </script>
 
 

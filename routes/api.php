@@ -18,6 +18,8 @@ use App\Http\Controllers\Authenticate;
 Route::post('register',[Authenticate::class,'store']);
 Route::get('/users',[Authenticate::class,'getUserinfo']);
 Route::get('/get-users',[Authenticate::class,'getUsers']);
+Route::get('/get-user-name',[Authenticate::class,'getUserName']);
+Route::get('/get-user-email',[Authenticate::class,'getUserEmail']);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
