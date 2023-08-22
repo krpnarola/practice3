@@ -1,18 +1,19 @@
 <template>
-    <div class="home">
-      <!-- <h3>Name: {{ name }}</h3> -->
-      <div  style="display: inline-block;" v-for="user in users" v-bind:key="user.id">
+  <div class="home">
+     <!-- <h3>Name: {{ name }}</h3> -->
+     <div  style="display: inline-block;" v-for="user in users" v-bind:key="user.id">
         <h2>{{ user.id }}</h2>
         <p>{{ user.name }}</p>
-      </div>
-
-      <TableComponent :ajax="ajax" :columns="columns" :options="options" />
-    </div>
-  </template>
-  
-  <script>
+     </div>
+     <div class="table-responsive">
+       <TableComponent class="table table-striped table-bordered dataTable display" :ajax="ajax" :columns="columns" :options="options" />
+     </div>
+  </div>
+</template>
+<script>
+  //Begin Table Component
   import TableComponent from '../components_file/TableComponent.vue';
-
+  
   const exportOptions = {
   columns: ':visible',
   format: {
@@ -25,7 +26,9 @@
         .text()
     }
   }   
-}
+  }
+  //End Table Component
+  
   export default {
     name: 'Home',
     components:{
@@ -35,17 +38,12 @@
       return {
         name: '',
         msg: 'Welcome to Your Vue.js App',
-        columns: [
-            { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
-            { data: 'name', title: 'Name', orderable: false, sortable: true, searchable: true },
-            { data: 'email', title: 'Email', orderable: false, sortable: true, searchable: true, },
-            { data: 'created_at', title: 'Created_at', orderable: false, sortable: true, searchable: true},
-        ],
+        columns: [],
         ajax: 'api/get-users',
         options:{
                   dom: 'Bflrtip',
                   processing: true,
-                  // "dom": 'lrtip',
+                  responsive: true,
                   // "lengthMenu": [ 10, 25, 50, 75, 100 ],
                   "pageLength": 10,
                   buttons: [
@@ -78,149 +76,135 @@
                       visible: false,
                       searchable: false,
                     },
-                    { className: "text_search", "targets": [ 1 ] },
-                    { className: "select_search", "targets": [ 2 ] }
-                    // {
-                    //     width: '15%',
-                    //     targets: [6], 
-                    // }
+                    
                   ],
-                  initComplete: function(){
-                    this.api().columns([1,2]).every(function (k, val) {
-                      var column = this;
-                      var column_head = $(column.header())[0];
-                      column_head = $(column_head).text();
-                    //   if ($(column.footer()).hasClass('select_search')) { 
-                    //   } else {
-                    //     // console.log(this);
-                    //     var that = this;
-                    //     // console.log(this.footer());
-                    //     if(k == 0){
-                    //       $('.search_text_name', this.footer()).on('keyup', function () {
-                    //           // that.search(this.value).draw();
-                    //           that.columns(1).search(this.value).draw();
-                    //       });
-                    //     }
-                    //   }
-                var select = $('<select class="cb-dropdown-wrap"><option value=""></option></select>')
-                    .appendTo( $(column.header()))
-                    .on( 'change', function () {
-                        // var val = $.fn.dataTable.util.escapeRegex(
-                        //     $(this).val()
-                        // );
-                        var val = $(this).val();
-                        column.search( val ? '^'+val+'$' : '', true, false ).draw();
-                    } );
-                    if(column_head.toLowerCase() == 'name'){
-                      axios.get('api/get-user-name').then(result => {
-                        $(result.data.user_names).each(function(k, value){
-                          select.append( '<option value="'+value.name+'">'+value.name+'</option>' )
+                  initComplete: function(settings, json){
+                    // Setup - add a text input to each footer cell
+                    $('#table_component thead tr').clone(true).addClass('filters').appendTo('#table_component thead');
+                    
+                    var api = this.api();
+                    // For each column
+                    
+                    api.columns().eq(0).each(function (colIdx) {
+                      if(colIdx == 0){
+                        return true;
+                      }
+                      // Set the header cell to contain the input element
+                          var cell = $('.filters th').eq(
+                            $(api.column(colIdx).header()).index()
+                            );
+                            var title = $(cell).text();
+                            console.log(title);
+  
+                          if(title.toLowerCase() == 'name'){
+                            // if (!api.column(colIdx).searchable()) {
+                            //   return false;
+                            // }
+                            var select = $('<select class="cb-dropdown-wrap" style="width:100%"><option value="">All</option></select>') .on( 'change', function () {
+                                var val = $(this).val();
+                                api.column(colIdx).search( val ? '^'+val+'$' : '', true, false ).draw();
+                            } );
+                            axios.get('api/get-user-name').then(result => {
+                              $(result.data.user_names).each(function(k, value){
+                                select.append('<option value="'+value.name+'">'+value.name+'</option>')
+                              });
+                            });
+                            $(cell).html(select)
+                            
+                          }else if(title.toLowerCase() == 'email'){
+                            var select = $('<select class="cb-dropdown-wrap" style="width:100%"><option value="">All</option></select>') .on( 'change', function () {
+                                var val = $(this).val();
+                                api.column(colIdx).search( val ? '^'+val+'$' : '', true, false ).draw();
+                            } );
+                            axios.get('api/get-user-email').then(result => {
+                              $(result.data.emails).each(function(k, value){
+                                select.append('<option value="'+value.email+'">'+value.email+'</option>')
+                              });
+                            });
+                            $(cell).html(select)
+                          }
+                          else{
+                            $(cell).html('<input type="text" placeholder="' + title + '" />');
+                          }
+                          console.log(title.toLowerCase());
+  
+                          // On every keypress in this input
+                        $('input',$('.filters th').eq($(api.column(colIdx).header()).index())).off('keyup change')
+                        .on('change', function (e) {
+                            // Get the search value
+                            $(this).attr('title', $(this).val());
+                            var regexr = '({search})'; //$(this).parents('th').find('select').val();
+  
+                            var cursorPosition = this.selectionStart;
+                            // Search the column for that value
+                            api.column(colIdx).search(
+                                    this.value != ''
+                                        ? regexr.replace('{search}', '(((' + this.value + ')))')
+                                        : '',
+                                    this.value != '',
+                                    this.value == ''
+                                ).draw();
+                        }).on('keyup', function (e) {
+                            e.stopPropagation();
+                            $(this).trigger('change');
+                            // $(this).focus()[0].setSelectionRange(cursorPosition, cursorPosition);
                         });
-                        
-                      });
-                    }else if(column_head.toLowerCase() == 'email'){
-                      axios.get('api/get-user-email').then(result => {
-                        $(result.data.emails).each(function(k, value){
-                          select.append('<option value="'+value.email+'">'+value.email+'</option>')
-                        });
-                      });
-                    }
-                    else{
-                      column.data().unique().sort().each( function ( d, j ) {
-                          select.append( '<option value="'+d+'">'+d+'</option>' )
-                      } );
-                    }
-
-
-                    });
-                  }
+                      })
+                  $('#is_filter_load').val(1);
+                  },
                 }
       }
     },
     created() {
-      // this.$store.dispatch('loadUsers');
+      // alert(this.$store.getters.StateColumn)
+      var details = [
+            { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
+            { data: 'name', title: 'Name', orderable: false, sortable: true, searchable: true },
+            { data: 'email', title: 'Email', orderable: false, sortable: true, searchable: true, },
+            { data: 'created_at', title: 'Created_at', orderable: false, sortable: true, searchable: true},
+        ];
+      var specificValuesFromArray = details.filter(obj => obj.data == 'id'  || obj.data == 'name' || obj.data == 'email' || obj.data == 'created_at');
+      console.log( [
+            { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
+            { data: 'name', title: 'Name', orderable: false, sortable: true, searchable: true },
+            { data: 'email', title: 'Email', orderable: false, sortable: true, searchable: true, },
+            { data: 'created_at', title: 'Created_at', orderable: false, sortable: true, searchable: true},
+        ]);
+      console.log(specificValuesFromArray);
+      return this.columns = specificValuesFromArray
     },
     computed: {
       // users() {
-      //   console.log('comp');
-      //   return this.$store.getters.getCurrentUser;
       // }
-      // $session: function () { return this.$store.state.sessionLoaded; },
-      
-      // $session: function () { 
-      //   alert('get session');
-      //   this.$store.dispatch('loadUsers');
-      //   return this.$store.state.users; 
-      // },
-      users() {
-        // console.log('------');
-        // console.log(this.$store.getters.getCurrentUser);
-        // console.log('------');
-        //   return this.$store.getters.getCurrentUser;
-      },
     },
     mounted: function(){
       this.name = this.$store.getters.StateUser;
-      // console.log(store.getters.;
       // console.log(this.$store.getters.getCurrentUser);
       const vm = this;
-      // this.$store.commit("changeSessionLoaded");
-      // this.$store.dispatch('loadUsers');
-      // alert('print..');
-      // console.log(this.users);
-      setTimeout(() => {
-        
-      }, 100);
-      // console.log(this.$store.getters.getCurrentUser);
-      // setTimeout(function(){
-      //   console.log(vm.$store.state.users);
-      // }, 1000);
+      let recaptchaScript = document.createElement('script')
+      recaptchaScript.setAttribute('src', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.1/js/select2.min.js')
+      document.head.appendChild(recaptchaScript)
     },
+    method:{
+    }
   }
   $(document).ready(function(){
-      $("#table_component").append(
-        $('<tfoot/>').append( $("#table_component thead tr").clone() )
-      );
-      $('#table_component tfoot th').each(function () {
-        var title = $(this).text();
-        // console.log($(this)[0].className);
-
-        const className = $(this)[0].className;
-        const substring = "text_search";
-        if (className.includes(substring)) {
-          $(this).html('<input type="text" placeholder="Search ' + title + '" class="search_text_name" />');
+    //Select2 apply if there is an element.
+    var load_select2 = setInterval(function(){ 
+        if($('#is_filter_load').val() == 1){
+          selectPicker();
+          clearInterval(load_select2);
         }
-    });
-
-    $("#table_component tfoot th").each( function ( i ) {
-    //   var table = $('#table_component');
-    //   if ($(this).text() !== '') {
-    //     console.log($(this).text());
-    //     var isStatusColumn = (($(this).text() == 'Status') ? true : false);
-    //     var select = $('<select><option value=""></option></select>')
-	  //           .appendTo( $(this).empty() )
-	  //           .on( 'change', function () {
-	  //               var val = $(this).val();
-					
-	  //               table.column( i )
-	  //                   .search( val ? '^'+$(this).val()+'$' : val, true, false )
-	  //                   .draw();
-	  //           });
-    //     // Get the Status values a specific way since the status is a anchor/image
-    //     if (isStatusColumn) {
-          
-    //     }else{
-    //       table.column( i ).data().unique().sort().each( function ( d, j ) {  
-		// 			select.append( '<option value="'+d+'">'+d+'</option>' );
-		//         } );	
-    //     }
-        
-    //   }
-    });
+       }, 1000);
+    setTimeout(function() { clearInterval(load_select2); }, 10000);
+  
+    //Select2
+    function selectPicker(){
+      if($(".cb-dropdown-wrap").length > 0){
+        $(".cb-dropdown-wrap").select2({
+          maximumSelectionLength: 2,
+        })
+      }
+    } 
   });
-  </script>
-  
-  <!-- Add "scoped" attribute to limit CSS to this component only -->
-  <style scoped>
-  
-  </style>
+</script>

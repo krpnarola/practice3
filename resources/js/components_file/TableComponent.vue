@@ -3,6 +3,7 @@
 
       <div class="table-responsive">
         <DataTable id="table_component" :ajax="ajax" ref="table" :columns="columns" :options="options" class="display nowrap"></DataTable>
+        <input type="hidden" id="is_filter_load" value="0">
       </div>
 
     </div>
@@ -41,6 +42,7 @@
     DataTable.use(Buttons);
     DataTable.use(pdfmake);
     DataTable.use(ButtonsHTml5);
+    DataTable.use(DataTableLib);
 
     export default {
       name: 'TableComponent',
@@ -75,15 +77,8 @@
     </script>
 
 
-<style scoped>
-    table {
-      /* width: 100%; */
-      border-collapse: collapse;
-    }
-    @import 'datatables.net-dt';
-    @import 'datatables.net-bs5';
-
-    @import 'datatables.net-dt';
-@import 'datatables.net-buttons-dt';
-@import 'datatables.net-select-dt';
-    </style>
+<style>
+  /* @import 'bootstrap'; */
+  @import 'datatables.net-bs5';
+  /* @import 'public/assets/plugins/global/plugins.bundle.css'; */
+</style>

@@ -3,12 +3,14 @@ import axios from "axios";
 const state = {
   user: null,
   posts: null,
+  columns: ['name','email'],
 };
 
 const getters = {
   isAuthenticated: (state) => !!state.user,
   StatePosts: (state) => state.posts,
   StateUser: (state) => state.user,
+  StateColumn: (state) => state.columns
 };
 
 const actions = {
