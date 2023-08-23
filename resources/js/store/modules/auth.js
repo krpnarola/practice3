@@ -3,7 +3,7 @@ import axios from "axios";
 const state = {
   user: null,
   posts: null,
-  columns: ['name','email'],
+  columns: ['name','email', 'created_at'],
 };
 
 const getters = {

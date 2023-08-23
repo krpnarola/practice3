@@ -70,18 +70,18 @@ class Authenticate extends Controller
         // return view('users');
     }
 
-    public function getUserName(){
-        $users = User::select('name')->get();
+    public function getUserName(Request $request){
+        $users = User::select('name AS text')->where('name', 'like', '%'.$request->search.'%')->get();
         $response = [
-            'user_names' => $users
+            'data' => $users
         ];
         return $response;
     }
     
-    public function getUserEmail(){
-        $emails = User::select('email')->get();
+    public function getUserEmail(Request $request){
+        $emails = User::select('email AS text')->where('email', 'like', '%'.$request->search.'%')->get();
         $response = [
-            'emails' => $emails
+            'data' => $emails
         ];
         return $response;
     }

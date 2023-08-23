@@ -94,33 +94,30 @@
                             $(api.column(colIdx).header()).index()
                             );
                             var title = $(cell).text();
-                            console.log(title);
-  
                           if(title.toLowerCase() == 'name'){
-                            // if (!api.column(colIdx).searchable()) {
-                            //   return false;
-                            // }
-                            var select = $('<select class="cb-dropdown-wrap" style="width:100%"><option value="">All</option></select>') .on( 'change', function () {
+                            var select = $('<select data="name" class="cb-dropdown-wrap" style="width:100%"><option value="" selected="selected">All</option></select>') .on( 'change', function () {
                                 var val = $(this).val();
                                 api.column(colIdx).search( val ? '^'+val+'$' : '', true, false ).draw();
                             } );
-                            axios.get('api/get-user-name').then(result => {
-                              $(result.data.user_names).each(function(k, value){
-                                select.append('<option value="'+value.name+'">'+value.name+'</option>')
-                              });
-                            });
+                            //Get records by table load.
+                            // axios.get('api/get-user-name').then(result => {
+                            //   $(result.data.user_names).each(function(k, value){
+                            //     select.append('<option value="'+value.name+'">'+value.name+'</option>')
+                            //   });
+                            // });
                             $(cell).html(select)
                             
                           }else if(title.toLowerCase() == 'email'){
-                            var select = $('<select class="cb-dropdown-wrap" style="width:100%"><option value="">All</option></select>') .on( 'change', function () {
+                            var select = $('<select data="email" class="cb-dropdown-wrap" style="width:100%"><option value="">All</option></select>') .on( 'change', function () {
                                 var val = $(this).val();
                                 api.column(colIdx).search( val ? '^'+val+'$' : '', true, false ).draw();
                             } );
-                            axios.get('api/get-user-email').then(result => {
-                              $(result.data.emails).each(function(k, value){
-                                select.append('<option value="'+value.email+'">'+value.email+'</option>')
-                              });
-                            });
+                            //Get records by table load.
+                            // axios.get('api/get-user-email').then(result => {
+                            //   $(result.data.emails).each(function(k, value){
+                            //     select.append('<option value="'+value.email+'">'+value.email+'</option>')
+                            //   });
+                            // });
                             $(cell).html(select)
                           }
                           else{
@@ -156,55 +153,87 @@
       }
     },
     created() {
-      // alert(this.$store.getters.StateColumn)
+      var state_column = this.$store.getters.StateColumn;
       var details = [
-            { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
+        { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
             { data: 'name', title: 'Name', orderable: false, sortable: true, searchable: true },
             { data: 'email', title: 'Email', orderable: false, sortable: true, searchable: true, },
             { data: 'created_at', title: 'Created_at', orderable: false, sortable: true, searchable: true},
         ];
-      var specificValuesFromArray = details.filter(obj => obj.data == 'id'  || obj.data == 'name' || obj.data == 'email' || obj.data == 'created_at');
-      console.log( [
-            { data: 'id', title: 'Id', orderable: false, sortable: true, searchable: true },
-            { data: 'name', title: 'Name', orderable: false, sortable: true, searchable: true },
-            { data: 'email', title: 'Email', orderable: false, sortable: true, searchable: true, },
-            { data: 'created_at', title: 'Created_at', orderable: false, sortable: true, searchable: true},
-        ]);
-      console.log(specificValuesFromArray);
-      return this.columns = specificValuesFromArray
+        
+      var details= details.filter(function(item) {
+        var title = item['title'].toLowerCase();
+        if(title == 'id'){
+          return true;
+        }
+        var is_exist = state_column.indexOf(title);
+        if(is_exist >= 0){
+          return true;
+        }
+      });
+      return this.columns = details
     },
-    computed: {
-      // users() {
-      // }
-    },
+    computed: {},
     mounted: function(){
       this.name = this.$store.getters.StateUser;
-      // console.log(this.$store.getters.getCurrentUser);
       const vm = this;
       let recaptchaScript = document.createElement('script')
       recaptchaScript.setAttribute('src', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.1/js/select2.min.js')
       document.head.appendChild(recaptchaScript)
+
+      $(document).ready(function(){
+        //Select2 apply if there is an element.
+        var load_select2 = setInterval(function(){ 
+            if($('#is_filter_load').val() == 1){
+              selectPicker();
+              clearInterval(load_select2);
+            }
+          }, 1000);
+        setTimeout(function() { clearInterval(load_select2); }, 10000);
+      
+        //Select2
+        function selectPicker(){
+          if($(".cb-dropdown-wrap").length > 0){
+            $(".cb-dropdown-wrap").each(function(){
+              var select = $(this);
+              var url = ''; 
+              if($(select).attr('data') == 'name'){
+                url = 'api/get-user-name';
+              }else if($(select).attr('data') == 'email'){
+                url = 'api/get-user-email';
+              }
+              if(url){
+                select.select2({
+                  minimumInputLength: 3,
+                  allowClear: true,
+                  placeholder: 'Select',
+                  ajax:{
+                    url: url,
+                    data: function (params) {
+                      var query = {
+                        search: params.term,
+                        type: 'public'
+                      }
+                      return query
+                    },
+                    processResults: function (data) {
+                      return {
+                        results: $.map(data.data, function (item) {
+                          return {
+                                text: item.text,
+                                id: item.text
+                            }
+                        })
+                      }
+                    }
+                  } 
+                })
+              }
+            });
+          }
+        } 
+      });
     },
-    method:{
-    }
   }
-  $(document).ready(function(){
-    //Select2 apply if there is an element.
-    var load_select2 = setInterval(function(){ 
-        if($('#is_filter_load').val() == 1){
-          selectPicker();
-          clearInterval(load_select2);
-        }
-       }, 1000);
-    setTimeout(function() { clearInterval(load_select2); }, 10000);
-  
-    //Select2
-    function selectPicker(){
-      if($(".cb-dropdown-wrap").length > 0){
-        $(".cb-dropdown-wrap").select2({
-          maximumSelectionLength: 2,
-        })
-      }
-    } 
-  });
+
 </script>
